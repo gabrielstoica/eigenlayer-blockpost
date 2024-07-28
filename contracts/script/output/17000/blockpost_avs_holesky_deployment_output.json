@@ -1,0 +1,8 @@
+{
+  "addresses": {
+    "BlockpostServiceManagerImplementation": "0xcbDbb24a52FD886438dB0C5fA490C2C35FB72eDa",
+    "BlockpostServiceManagerProxy": "0x50D808bD7E85DDEd5E92792AC9a38422540E2aF1",
+    "ECDSAStakeRegistry": "0x003Fe907D6682cA6Ae1B65Bac252B6fB4A4c6e2a",
+    "ECDSAStakeRegistryImplementation": "0x59305dE7de61a75E46828Bc73DC70EeDA28290f3"
+  }
+}
