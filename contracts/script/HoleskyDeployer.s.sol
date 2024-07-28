@@ -3,19 +3,17 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import "@eigenlayer/contracts/permissions/PauserRegistry.sol";
-import {IDelegationManager} from "@eigenlayer/contracts/interfaces/IDelegationManager.sol";
-import {IAVSDirectory} from "@eigenlayer/contracts/interfaces/IAVSDirectory.sol";
-import {IStrategyManager, IStrategy} from "@eigenlayer/contracts/interfaces/IStrategyManager.sol";
-import {StrategyBase} from "@eigenlayer/contracts/strategies/StrategyBase.sol";
-import {ECDSAStakeRegistry} from "@eigenlayer-middleware/src/unaudited/ECDSAStakeRegistry.sol";
-import {Quorum, StrategyParams} from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
-import {HelloWorldServiceManager} from "../src/HelloWorldServiceManager.sol";
+import { IDelegationManager } from "@eigenlayer/contracts/interfaces/IDelegationManager.sol";
+import { IAVSDirectory } from "@eigenlayer/contracts/interfaces/IAVSDirectory.sol";
+import { IStrategyManager, IStrategy } from "@eigenlayer/contracts/interfaces/IStrategyManager.sol";
+import { StrategyBase } from "@eigenlayer/contracts/strategies/StrategyBase.sol";
+import { ECDSAStakeRegistry } from "@eigenlayer-middleware/src/unaudited/ECDSAStakeRegistry.sol";
+import { Quorum, StrategyParams } from "@eigenlayer-middleware/src/interfaces/IECDSAStakeRegistryEventsAndErrors.sol";
+import { BlockpostServiceManager } from "../src/BlockpostServiceManager.sol";
 import "@eigenlayer/test/mocks/EmptyContract.sol";
 import "../src/ERC20Mock.sol";
 import "forge-std/Script.sol";
-import "forge-std/StdJson.sol";
-import "forge-std/console.sol";
-import {Utils} from "./utils/Utils.sol";
+import { Utils } from "./utils/Utils.sol";
 
 contract HoleskyDeployer is Script, Utils {
     // ERC20 and Strategy: we need to deploy this erc20, create a strategy for it, and whitelist this strategy in the strategy manager
@@ -26,12 +24,12 @@ contract HoleskyDeployer is Script, Utils {
     // Hello World contracts
     ProxyAdmin public helloWorldProxyAdmin;
     PauserRegistry public helloWorldPauserReg;
-    
+
     ECDSAStakeRegistry public stakeRegistryProxy;
     ECDSAStakeRegistry public stakeRegistryImplementation;
 
-    HelloWorldServiceManager public helloWorldServiceManagerProxy;
-    HelloWorldServiceManager public helloWorldServiceManagerImplementation;
+    BlockpostServiceManager public helloWorldServiceManagerProxy;
+    BlockpostServiceManager public helloWorldServiceManagerImplementation;
 
     function run() external {
         // Manually pasted addresses of Eigenlayer contracts
@@ -54,11 +52,7 @@ contract HoleskyDeployer is Script, Utils {
 
         vm.startBroadcast();
         _deployHelloWorldContracts(
-            delegationManager,
-            avsDirectory,
-            baseStrategyImplementation,
-            helloWorldCommunityMultisig,
-            helloWorldPauser
+            delegationManager, avsDirectory, baseStrategyImplementation, helloWorldCommunityMultisig, helloWorldPauser
         );
         vm.stopBroadcast();
     }
@@ -78,87 +72,55 @@ contract HoleskyDeployer is Script, Utils {
             address[] memory pausers = new address[](2);
             pausers[0] = helloWorldPauser;
             pausers[1] = helloWorldCommunityMultisig;
-            helloWorldPauserReg = new PauserRegistry(
-                pausers,
-                helloWorldCommunityMultisig
-            );
+            helloWorldPauserReg = new PauserRegistry(pausers, helloWorldCommunityMultisig);
         }
 
         EmptyContract emptyContract = new EmptyContract();
 
         // First, deploy upgradeable proxy contracts that will point to the implementations.
-        helloWorldServiceManagerProxy = HelloWorldServiceManager(
-            address(
-                new TransparentUpgradeableProxy(
-                    address(emptyContract),
-                    address(helloWorldProxyAdmin),
-                    ""
-                )
-            )
+        helloWorldServiceManagerProxy = BlockpostServiceManager(
+            address(new TransparentUpgradeableProxy(address(emptyContract), address(helloWorldProxyAdmin), ""))
         );
         stakeRegistryProxy = ECDSAStakeRegistry(
-            address(
-                new TransparentUpgradeableProxy(
-                    address(emptyContract),
-                    address(helloWorldProxyAdmin),
-                    ""
-                )
-            )
+            address(new TransparentUpgradeableProxy(address(emptyContract), address(helloWorldProxyAdmin), ""))
         );
 
         // Second, deploy the implementation contracts, using the proxy contracts as inputs
         {
-            stakeRegistryImplementation = new ECDSAStakeRegistry(
-                delegationManager
-            );
+            stakeRegistryImplementation = new ECDSAStakeRegistry(delegationManager);
 
             helloWorldProxyAdmin.upgrade(
-                TransparentUpgradeableProxy(payable(address(stakeRegistryProxy))),
-                address(stakeRegistryImplementation)
+                TransparentUpgradeableProxy(payable(address(stakeRegistryProxy))), address(stakeRegistryImplementation)
             );
         }
 
-        {   
+        {
             // Create an array with one StrategyParams element
-            StrategyParams memory strategyParams = StrategyParams({
-                strategy: baseStrategyImplementation,
-                multiplier: 10_000
-            });
+            StrategyParams memory strategyParams =
+                StrategyParams({ strategy: baseStrategyImplementation, multiplier: 10_000 });
 
             StrategyParams[] memory quorumsStrategyParams = new StrategyParams[](1);
             quorumsStrategyParams[0] = strategyParams;
 
-            Quorum memory quorum = Quorum(
-                quorumsStrategyParams
-            );
+            Quorum memory quorum = Quorum(quorumsStrategyParams);
 
             // Sort the array (though it has only one element, it's trivially sorted)
             // If the array had more elements, you would need to ensure it is sorted by strategy address
 
             helloWorldProxyAdmin.upgradeAndCall(
-                TransparentUpgradeableProxy(
-                    payable(address(stakeRegistryProxy))
-                ),
+                TransparentUpgradeableProxy(payable(address(stakeRegistryProxy))),
                 address(stakeRegistryImplementation),
                 abi.encodeWithSelector(
-                    ECDSAStakeRegistry.initialize.selector,
-                    address(helloWorldServiceManagerProxy),
-                    1,
-                    quorum
+                    ECDSAStakeRegistry.initialize.selector, address(helloWorldServiceManagerProxy), 1, quorum
                 )
             );
         }
 
-        helloWorldServiceManagerImplementation = new HelloWorldServiceManager(
-            address(avsDirectory),
-            address(stakeRegistryProxy),
-            address(delegationManager)
-        );
+        helloWorldServiceManagerImplementation =
+            new BlockpostServiceManager(address(avsDirectory), address(stakeRegistryProxy), address(delegationManager));
         // Upgrade the proxy contracts to use the correct implementation contracts and initialize them.
         helloWorldProxyAdmin.upgrade(
-            TransparentUpgradeableProxy(
-                payable(address(helloWorldServiceManagerProxy))
-            ),
+            TransparentUpgradeableProxy(payable(address(helloWorldServiceManagerProxy))),
             address(helloWorldServiceManagerImplementation)
         );
 
@@ -166,34 +128,18 @@ contract HoleskyDeployer is Script, Utils {
         string memory parent_object = "parent object";
 
         string memory deployed_addresses = "addresses";
+        vm.serializeAddress(deployed_addresses, "BlockpostServiceManagerProxy", address(helloWorldServiceManagerProxy));
         vm.serializeAddress(
-            deployed_addresses,
-            "HelloWorldServiceManagerProxy",
-            address(helloWorldServiceManagerProxy)
+            deployed_addresses, "BlockpostServiceManagerImplementation", address(helloWorldServiceManagerImplementation)
         );
-        vm.serializeAddress(
-            deployed_addresses,
-            "HelloWorldServiceManagerImplementation",
-            address(helloWorldServiceManagerImplementation)
-        );
-        vm.serializeAddress(
-            deployed_addresses,
-            "ECDSAStakeRegistry",
-            address(stakeRegistryProxy)
-        );
-        
+        vm.serializeAddress(deployed_addresses, "ECDSAStakeRegistry", address(stakeRegistryProxy));
+
         string memory deployed_addresses_output = vm.serializeAddress(
-            deployed_addresses,
-            "ECDSAStakeRegistryImplementation",
-            address(stakeRegistryImplementation)
+            deployed_addresses, "ECDSAStakeRegistryImplementation", address(stakeRegistryImplementation)
         );
 
         // Serialize all the data
-        string memory finalJson = vm.serializeString(
-            parent_object,
-            deployed_addresses,
-            deployed_addresses_output
-        );
+        string memory finalJson = vm.serializeString(parent_object, deployed_addresses, deployed_addresses_output);
 
         writeOutput(finalJson, "hello_world_avs_holesky_deployment_output");
     }
