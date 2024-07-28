@@ -1,47 +1,48 @@
 import { ethers } from "ethers";
 import * as dotenv from "dotenv";
 import { delegationABI } from "./abis/delegationABI";
-import { contractABI } from './abis/contractABI';
-import { registryABI } from './abis/registryABI';
-import { avsDirectoryABI } from './abis/avsDirectoryABI';
+import contractABI from "../contracts/out/BlockpostServiceManager.sol/BlockpostServiceManager.json";
+import registryABI from "../contracts/out/ECDSAStakeRegistry.sol/ECDSAStakeRegistry.json"
+import avsDirectoryABI from "../contracts/out/AVSDirectory.sol/AVSDirectory.json"
 dotenv.config();
 
 const provider = new ethers.providers.JsonRpcProvider(process.env.RPC_URL);
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY!, provider);
-
 const delegationManagerAddress = process.env.DELEGATION_MANAGER_ADDRESS!;
 const contractAddress = process.env.CONTRACT_ADDRESS!;
 const stakeRegistryAddress = process.env.STAKE_REGISTRY_ADDRESS!;
 const avsDirectoryAddress = process.env.AVS_DIRECTORY_ADDRESS!;
 
 const delegationManager = new ethers.Contract(delegationManagerAddress, delegationABI, wallet);
-const contract = new ethers.Contract(contractAddress, contractABI, wallet);
-const registryContract = new ethers.Contract(stakeRegistryAddress, registryABI, wallet);
-const avsDirectory = new ethers.Contract(avsDirectoryAddress, avsDirectoryABI, wallet);
+const contract = new ethers.Contract(contractAddress, contractABI.abi, wallet);
+const registryContract = new ethers.Contract(stakeRegistryAddress, registryABI.abi, wallet);
+const avsDirectory = new ethers.Contract(avsDirectoryAddress, avsDirectoryABI.abi, wallet);
 
-const signAndRespondToTask = async (taskIndex: number, taskCreatedBlock: number, taskName: string) => {
-    const message = `Hello, ${taskName}`;
-    const messageHash = ethers.utils.solidityKeccak256(["string"], [message]);
+const signAndRespondToRequest = async (requestId: number, requestBlocknumber: number, requestMessage: string) => {
+    const messageHash = ethers.utils.solidityKeccak256(["string"], [requestMessage])
     const messageBytes = ethers.utils.arrayify(messageHash);
     const signature = await wallet.signMessage(messageBytes);
 
     console.log(
-        `Signing and responding to task ${taskIndex}`
+        `Signing and responding to request ${requestId}`
     )
-
-    const tx = await contract.respondToTask(
-        { name: taskName, taskCreatedBlock: taskCreatedBlock },
-        taskIndex,
+    console.log({ message: requestMessage, blocknumber: requestBlocknumber },
+        requestId,
+        signature);
+    const tx = await contract.respondToRequest(
+        { message: requestMessage, blocknumber: requestBlocknumber },
+        requestId,
         signature
     );
+
     await tx.wait();
-    console.log(`Responded to task.`);
+    console.log(`Successfully responded to request!`);
 };
 
 const registerOperator = async () => {
     console.log("check")
     const tx1 = await delegationManager.registerAsOperator({
-        earningsReceiver: await wallet.address,
+        earningsReceiver: wallet.address,
         delegationApprover: "0x0000000000000000000000000000000000000000",
         stakerOptOutWindowBlocks: 0
     }, "");
@@ -60,41 +61,41 @@ const registerOperator = async () => {
 
     // Calculate the digest hash using the avsDirectory's method
     const digestHash = await avsDirectory.calculateOperatorAVSRegistrationDigestHash(
-        wallet.address, 
-        contract.address, 
-        salt, 
+        wallet.address,
+        contract.address,
+        salt,
         expiry
     );
 
     // Sign the digest hash with the operator's private key
     const signingKey = new ethers.utils.SigningKey(process.env.PRIVATE_KEY!);
     const signature = signingKey.signDigest(digestHash);
-    
+
     // Encode the signature in the required format
     operatorSignature.signature = ethers.utils.joinSignature(signature);
 
     const tx2 = await registryContract.registerOperatorWithSignature(
-        wallet.address,
-        operatorSignature
+        operatorSignature,
+        wallet.address
     );
     await tx2.wait();
+
     console.log("Operator registered on AVS successfully");
 };
 
-const monitorNewTasks = async () => {
-    await contract.createNewTask("EigenWorld");
-
-    contract.on("NewTaskCreated", async (taskIndex: number, task: any) => {
-        console.log(`New task detected: Hello, ${task.name}`);
-        await signAndRespondToTask(taskIndex, task.taskCreatedBlock, task.name);
+const monitorNewRequests = async () => {
+    contract.on("MessageRequestCreated", async (id: number, req: any) => {
+        console.log(`New request detected with the following message: ${req.message}`);
+        await signAndRespondToRequest(id, req.blocknumber, req.message);
     });
 
-    console.log("Monitoring for new tasks...");
+    console.log("Monitoring for new requests...");
 };
 
 const main = async () => {
+
     await registerOperator();
-    monitorNewTasks().catch((error) => {
+    monitorNewRequests().catch((error) => {
         console.error("Error monitoring tasks:", error);
     });
 };
