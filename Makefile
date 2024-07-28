@@ -23,10 +23,10 @@ build-contracts: ## builds all contracts
 deploy-eigenlayer-contracts-to-anvil-and-save-state: ## Deploy eigenlayer
 	./utils/anvil/deploy-eigenlayer-save-anvil-state.sh
 
-deploy-hello-world-contracts-to-anvil-and-save-state: ## Deploy avs
+deploy-blockpost-contracts-to-anvil-and-save-state: ## Deploy avs
 	./utils/anvil/deploy-avs-save-anvil-state.sh
 
-deploy-contracts-to-anvil-and-save-state: deploy-eigenlayer-contracts-to-anvil-and-save-state deploy-hello-world-contracts-to-anvil-and-save-state ## deploy eigenlayer, shared avs contracts, and inc-sq contracts (part of quickstart)
+deploy-contracts-to-anvil-and-save-state: deploy-eigenlayer-contracts-to-anvil-and-save-state deploy-blockpost-contracts-to-anvil-and-save-state ## deploy eigenlayer, shared avs contracts, and inc-sq contracts (part of quickstart)
 
 start-chain-with-contracts-deployed: ## starts anvil from a saved state file (with el and avs contracts deployed)
 	./utils/anvil/start-anvil-chain-with-el-and-avs-deployed.sh
@@ -48,8 +48,8 @@ ____OFFCHAIN_SOFTWARE___:
 start-operator: ## start operator (part of quickstart)
 	tsc && node dist/index.js
 
-spam-tasks: ## start tasks spamming (part of quickstart)
-	tsc && node dist/createNewTasks.js
+spam-requests: ## start requests spamming (part of quickstart)
+	tsc && node dist/createNewRequests.js
 
 -----------------------------: ##
 _____HELPER_____: ##
