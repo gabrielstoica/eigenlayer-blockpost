@@ -9,7 +9,7 @@ Simple EigenLayer AVS allowing users to store and retrieve messages on-chain. Th
 make deploy-contracts-to-anvil-and-save-state
 ```
 
-- Operator deployed on the EigenLayer network;
+- Operator deployed on the EigenLayer network at [this address](https://holesky.eigenlayer.xyz/operator/0xb85bf8c3faa466848bd5b14e0a79580bf446bc63);
 
 ## How it works
 
@@ -20,6 +20,13 @@ There are 5 steps to this AVS:
 - any operator who is staked to serve the BlockPost AVS takes this request and signs it;
 - the operator submits this message with their signature back to the AVS using the `respondToRequest` method;
 - _if the operator is in fact registered to the AVS and has the minimum needed stake, the submission is accepted_;
+
+## Frontend app
+
+Users can submit message storage requests through a simple Next.js based app. By storing an on-chain message they create a new `MessageRequestCreated` request that is picked up by the Blockpost Operator, signed and validated on-chain.
+Once the message request is validated, users can retrieve messages by their IDs.
+
+![Blockpost AVS frontend](./assets/blockpost_AVS_frontend.png)
 
 ## Quick Start
 
@@ -44,9 +51,9 @@ In order to manually test the AVS and operator workflow, follow the next steps:
 3. Run `make start-chain-with-contracts-deployed`
    - This will build the contracts, start an Anvil chain, deploy the contracts to it, and leaves the chain running in the current terminal
 4. Open new terminal tab and run `make start-operator`
-   - This will compile the AVS software and start monitering new tasks
-5. Open new terminal tab and run `make spam-tasks` (Optional)
-   - This will spam the AVS with random names every 15 seconds
+   - This will compile the AVS software and start monitering new requests
+5. Open new terminal tab and run `make spam-requests` (Optional)
+   - This will spam the AVS with random messages at each 5 seconds
 
 ## Deploy AVS on Holesky Testnet
 
