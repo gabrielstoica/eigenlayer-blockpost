@@ -10,6 +10,7 @@ make deploy-contracts-to-anvil-and-save-state
 ```
 
 - Operator deployed on the EigenLayer network at [this address](https://holesky.eigenlayer.xyz/operator/0xb85bf8c3faa466848bd5b14e0a79580bf446bc63);
+- Blockpost AVS deployed on the Holesky Testnet and available on the EigenLayer network at [this address](https://holesky.eigenlayer.xyz/avs/0xc684f8fB6B0EA290109EB6ac42a0b40af44b45E2);
 
 ## How it works
 
@@ -80,6 +81,6 @@ The Blockpost AVS has been deployed on the Holesky Testnet and its address can b
 
 | Contract Name             | Holesky Address                                                                                                               |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Blockpost Service Manager | [0xcbDbb24a52FD886438dB0C5fA490C2C35FB72eDa](https://holesky.etherscan.io/address/0xcbDbb24a52FD886438dB0C5fA490C2C35FB72eDa) |
+| Blockpost Service Manager | [0xc684f8fB6B0EA290109EB6ac42a0b40af44b45E2](https://holesky.etherscan.io/address/0xc684f8fB6B0EA290109EB6ac42a0b40af44b45E2) |
 | Delegation Manager        | [0xA44151489861Fe9e3055d95adC98FbD462B948e7](https://holesky.etherscan.io/address/0xA44151489861Fe9e3055d95adC98FbD462B948e7) |
 | Avs Directory             | [0x055733000064333CaDDbC92763c58BF0192fFeBf](https://holesky.etherscan.io/address/0x055733000064333CaDDbC92763c58BF0192fFeBf) |
