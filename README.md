@@ -56,6 +56,10 @@ In order to manually test the AVS and operator workflow, follow the next steps:
 5. Open new terminal tab and run `make spam-requests` (Optional)
    - This will spam the AVS with random messages at each 5 seconds
 
+After running all the above commands in a separate terminale, the result should be this one:
+
+![EigenLayer local](./assets/avs_local.png)
+
 ## Deploy AVS on Holesky Testnet
 
 To deploy the Blockpost AVS contracts to the Holesky network, follow these steps:
