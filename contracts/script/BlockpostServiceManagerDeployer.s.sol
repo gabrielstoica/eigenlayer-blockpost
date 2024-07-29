@@ -166,8 +166,12 @@ contract BlockpostServiceManagerDeployer is Script, Utils {
             );
         }
 
-        BlockpostServiceManagerImplementation =
-            new BlockpostServiceManager(address(avsDirectory), address(stakeRegistryProxy), address(delegationManager));
+        BlockpostServiceManagerImplementation = new BlockpostServiceManager(
+            address(avsDirectory),
+            address(stakeRegistryProxy),
+            address(delegationManager),
+            "https://api.npoint.io/ba1dd2199b47913067d1"
+        );
         // Third, upgrade the proxy contracts to use the correct implementation contracts and initialize them.
         blockpostProxyAdmin.upgrade(
             TransparentUpgradeableProxy(payable(address(BlockpostServiceManagerProxy))),

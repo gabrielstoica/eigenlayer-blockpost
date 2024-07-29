@@ -31,20 +31,14 @@ contract HoleskyDeployer is Script, Utils {
     BlockpostServiceManager public blockpostServiceManagerProxy;
     BlockpostServiceManager public blockpostServiceManagerImplementation;
 
-    function run() external {
+    function run(string memory _avsMetadatURI) external {
         // Manually pasted addresses of Eigenlayer contracts
-        address strategyManagerAddr = 0xdfB5f6CE42aAA7830E94ECFCcAd411beF4d4D5b6;
         address delegationManagerAddr = 0xA44151489861Fe9e3055d95adC98FbD462B948e7;
         address avsDirectoryAddr = 0x055733000064333CaDDbC92763c58BF0192fFeBf;
-        address eigenLayerProxyAdminAddr = 0xDB023566064246399b4AE851197a97729C93A6cf;
-        address eigenLayerPauserRegAddr = 0x85Ef7299F8311B25642679edBF02B62FA2212F06;
         address baseStrategyImplementationAddr = 0x80528D6e9A2BAbFc766965E0E26d5aB08D9CFaF9;
 
-        IStrategyManager strategyManager = IStrategyManager(strategyManagerAddr);
         IDelegationManager delegationManager = IDelegationManager(delegationManagerAddr);
         IAVSDirectory avsDirectory = IAVSDirectory(avsDirectoryAddr);
-        ProxyAdmin eigenLayerProxyAdmin = ProxyAdmin(eigenLayerProxyAdminAddr);
-        PauserRegistry eigenLayerPauserReg = PauserRegistry(eigenLayerPauserRegAddr);
         StrategyBase baseStrategyImplementation = StrategyBase(baseStrategyImplementationAddr);
 
         address blockpostCommunityMultisig = msg.sender;
@@ -52,7 +46,12 @@ contract HoleskyDeployer is Script, Utils {
 
         vm.startBroadcast();
         _deployBlockpostContracts(
-            delegationManager, avsDirectory, baseStrategyImplementation, blockpostCommunityMultisig, blockpostPauser
+            delegationManager,
+            avsDirectory,
+            baseStrategyImplementation,
+            blockpostCommunityMultisig,
+            blockpostPauser,
+            _avsMetadatURI
         );
         vm.stopBroadcast();
     }
@@ -62,7 +61,8 @@ contract HoleskyDeployer is Script, Utils {
         IAVSDirectory avsDirectory,
         IStrategy baseStrategyImplementation,
         address blockpostCommunityMultisig,
-        address blockpostPauser
+        address blockpostPauser,
+        string memory _avsMetadatURI
     ) internal {
         // Deploy proxy admin for ability to upgrade proxy contracts
         blockpostProxyAdmin = new ProxyAdmin();
@@ -116,8 +116,9 @@ contract HoleskyDeployer is Script, Utils {
             );
         }
 
-        blockpostServiceManagerImplementation =
-            new BlockpostServiceManager(address(avsDirectory), address(stakeRegistryProxy), address(delegationManager));
+        blockpostServiceManagerImplementation = new BlockpostServiceManager(
+            address(avsDirectory), address(stakeRegistryProxy), address(delegationManager), _avsMetadatURI
+        );
         // Upgrade the proxy contracts to use the correct implementation contracts and initialize them.
         blockpostProxyAdmin.upgrade(
             TransparentUpgradeableProxy(payable(address(blockpostServiceManagerProxy))),

@@ -38,8 +38,11 @@ contract BlockpostServiceManager is ECDSAServiceManagerBase, IBlockpostServiceMa
     constructor(
         address _avsDirectory,
         address _stakeRegistry,
-        address _delegationManager
-    ) ECDSAServiceManagerBase(_avsDirectory, _stakeRegistry, address(0), _delegationManager) { }
+        address _delegationManager,
+        string memory _avsMetadataURI
+    ) ECDSAServiceManagerBase(_avsDirectory, _stakeRegistry, address(0), _delegationManager) {
+        ECDSAServiceManagerBase(_avsDirectory).updateAVSMetadataURI(_avsMetadataURI);
+    }
 
     /*//////////////////////////////////////////////////////////////////////////
                                     MODIFIERS

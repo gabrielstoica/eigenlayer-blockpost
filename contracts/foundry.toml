@@ -19,6 +19,7 @@ wrap_comments = false
 [rpc_endpoints]
 mainnet = "${MAINNET_RPC_URL}"
 sepolia = "${SEPOLIA_RPC_URL}"
+holesky = "${HOLESKY_RPC_URL}"
 
 [fuzz]
 # The amount of fuzz runs to perform for each fuzz test case. 
