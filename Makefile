@@ -48,6 +48,9 @@ ____OFFCHAIN_SOFTWARE___:
 start-operator: ## start operator (part of quickstart)
 	tsc && node dist/index.js
 
+register-operator-on-AVS-holesky:
+	tsc && node dist/registerOperatorHolesky.js
+
 spam-requests: ## start requests spamming (part of quickstart)
 	tsc && node dist/createNewRequests.js
 
